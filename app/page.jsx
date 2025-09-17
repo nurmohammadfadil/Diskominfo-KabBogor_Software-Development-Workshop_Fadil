@@ -8,10 +8,10 @@ export default function Home() {
       <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-800 mb-2">
-            Layanan Publik Mobile
+            Selamat Datang di Portal Layanan Publik Terpadu Kecamatan Ciampea Kabupaten Bogor
           </h1>
           <p className="text-gray-600">
-            Sistem Layanan Publik Mobile Responsive
+            Kemudahan layanan online: ajukan, lacak, dan dapatkan informasi dari mana saja.
           </p>
         </div>
 
