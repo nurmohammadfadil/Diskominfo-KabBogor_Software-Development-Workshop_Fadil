@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { Submission, initializeDatabase } from "@/lib/sequelize";
+import { Op } from "sequelize";
 
 // Initialize database on first request
 let dbInitialized = false;
@@ -17,8 +18,11 @@ export async function GET(request) {
     // In a real application, you would verify admin authentication here
     // For workshop purposes, we'll skip authentication
 
-    // Parse cache-busting query parameters
+    // Parse query parameters (search + sort) and cache-busting parameters
     const url = new URL(request.url);
+    const q = url.searchParams.get("q")?.trim();
+    const sort = url.searchParams.get("sort")?.trim(); // createdAt | status
+    const orderParam = url.searchParams.get("order")?.trim()?.toUpperCase(); // ASC | DESC
     const queryTimestamp = url.searchParams.get("t");
     const queryRandom = url.searchParams.get("r");
     const queryForce = url.searchParams.get("force");
@@ -36,14 +40,26 @@ export async function GET(request) {
       `[${new Date().toISOString()}] Query params: t=${queryTimestamp}, r=${queryRandom}, force=${queryForce}, cb=${queryCacheBuster}`
     );
 
-    // Force fresh query dengan random order strategy
-    const randomOrder = Math.random() > 0.5 ? "ASC" : "DESC";
-    console.log(
-      `[${new Date().toISOString()}] Using random order: ${randomOrder}`
-    );
+    // Build where clause for search q (by nama/email)
+    const where = {};
+    if (q) {
+      where[Op.or] = [
+        { nama: { [Op.iLike]: `%${q}%` } },
+        { email: { [Op.iLike]: `%${q}%` } },
+      ];
+    }
+
+    // Build sort option
+    const validSortFields = {
+      createdAt: "created_at",
+      status: "status",
+    };
+    const sortField = validSortFields[sort] || "created_at";
+    const sortOrder = orderParam === "ASC" || orderParam === "DESC" ? orderParam : "DESC";
 
     const submissions = await Submission.findAll({
-      order: [["created_at", randomOrder]], // Random order untuk force fresh query
+      where,
+      order: [[sortField, sortOrder]],
       attributes: [
         "id",
         "tracking_code",

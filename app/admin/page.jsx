@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Table, Select, message, Card, Row, Col } from "antd";
+import { Table, Select, message, Card, Row, Col, Input } from "antd";
 import {
   PieChart,
   Pie,
@@ -19,6 +19,9 @@ export default function AdminDashboard() {
   const [submissions, setSubmissions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState("ALL");
+  const [search, setSearch] = useState("");
+  const [sortField, setSortField] = useState("createdAt");
+  const [sortOrder, setSortOrder] = useState("DESC");
   const [chartData, setChartData] = useState([]);
   const [updatingStatus, setUpdatingStatus] = useState({}); // Track which submission is being updated
   const [refreshing, setRefreshing] = useState(false); // Track refresh loading state
@@ -55,8 +58,19 @@ export default function AdminDashboard() {
       const forceRefresh = Date.now();
       const cacheBuster = Math.random().toString(36).substring(7);
 
+      const params = new URLSearchParams({
+        t: String(timestamp),
+        r: random,
+        force: String(forceRefresh),
+        cb: cacheBuster,
+        _: String(Date.now()),
+      });
+      if (search) params.set("q", search);
+      if (sortField) params.set("sort", sortField);
+      if (sortOrder) params.set("order", sortOrder);
+
       const response = await fetch(
-        `/api/admin/submissions?t=${timestamp}&r=${random}&force=${forceRefresh}&cb=${cacheBuster}&_=${Date.now()}`,
+        `/api/admin/submissions?${params.toString()}`,
         {
           headers: {
             "Cache-Control": "no-cache, no-store, must-revalidate, max-age=0",
@@ -380,6 +394,39 @@ export default function AdminDashboard() {
               </p>
             </div>
             <div className="flex items-center space-x-2 sm:space-x-4">
+              <div className="flex items-center space-x-2">
+                <Input
+                  allowClear
+                  placeholder="Cari nama/email"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  onPressEnter={() => fetchSubmissions(true)}
+                  style={{ width: 200 }}
+                />
+                <Select
+                  value={sortField}
+                  onChange={setSortField}
+                  style={{ width: 150 }}
+                >
+                  <Option value="createdAt">Terbaru</Option>
+                  <Option value="status">Status</Option>
+                </Select>
+                <Select
+                  value={sortOrder}
+                  onChange={setSortOrder}
+                  style={{ width: 110 }}
+                >
+                  <Option value="DESC">Desc</Option>
+                  <Option value="ASC">Asc</Option>
+                </Select>
+                <button
+                  onClick={() => fetchSubmissions(true)}
+                  disabled={refreshing || loading}
+                  className="bg-gray-100 hover:bg-gray-200 disabled:bg-gray-100 text-gray-800 px-3 py-2 rounded-lg text-sm"
+                >
+                  Terapkan
+                </button>
+              </div>
               <button
                 onClick={handleRefresh}
                 disabled={refreshing || loading}

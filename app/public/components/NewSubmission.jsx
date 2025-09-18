@@ -60,19 +60,21 @@ export default function NewSubmission() {
     }
 
     if (!formData.nik.trim()) {
-      newErrors.nik = "NIK wajib diisi";
-    } else if (formData.nik.length !== 16) {
-      newErrors.nik = "NIK harus 16 digit";
-    } else if (!/^\d+$/.test(formData.nik)) {
-      newErrors.nik = "NIK hanya boleh berisi angka";
+      newErrors.nik = "Nomor KTP harus 16 digit";
+    } else if (!/^\d{16}$/.test(formData.nik)) {
+      newErrors.nik = "Nomor KTP harus 16 digit";
     }
 
-    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+    if (!formData.email.trim()) {
+      newErrors.email = "Email wajib diisi";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = "Format email tidak valid";
     }
 
     if (!formData.no_wa.trim()) {
       newErrors.no_wa = "Nomor WhatsApp wajib diisi";
+    } else if (!/^\d+$/.test(formData.no_wa.replace(/\s+/g, ""))) {
+      newErrors.no_wa = "Nomor WhatsApp harus angka saja";
     }
 
     if (!formData.jenis_layanan) {
@@ -163,7 +165,7 @@ export default function NewSubmission() {
             htmlFor="nik"
             className="block text-sm font-medium text-gray-700 mb-2"
           >
-            NIK (16 digit) *
+            Nomor KTP (16 digit) *
           </label>
           <input
             type="text"
@@ -188,7 +190,7 @@ export default function NewSubmission() {
             htmlFor="email"
             className="block text-sm font-medium text-gray-700 mb-2"
           >
-            Email (Opsional)
+            Email *
           </label>
           <input
             type="email"

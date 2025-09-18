@@ -12,6 +12,7 @@ export default function AdminLogin() {
   });
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -41,30 +42,34 @@ export default function AdminLogin() {
     setErrors({}); // Clear previous errors
 
     try {
-      // Simulate network delay for better UX
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Simple authentication for workshop - in production use proper auth
-      if (formData.username === "admin" && formData.password === "admin123") {
-        // Set session (in production use proper session management)
-        localStorage.setItem("adminLoggedIn", "true");
-        console.log("Login successful, localStorage set"); // Debug log
-        
-        // Show success message
-        message.success("Login berhasil! Mengalihkan ke dashboard...");
-        
-        // Small delay to show the success message
-        setTimeout(() => {
-          router.push("/admin");
-        }, 1000);
-      } else {
-        setErrors({ submit: "Username atau password salah" });
-        setIsSubmitting(false); // Reset loading state on error
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: formData.username,
+          password: formData.password,
+        }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok || data?.success === false) {
+        setErrors({ submit: data?.message || "Username atau password salah" });
+        setIsSubmitting(false);
+        return;
       }
+
+      // Set session (sementara; integrasikan session yang proper nanti)
+      localStorage.setItem("adminLoggedIn", "true");
+
+      message.success("Login berhasil! Mengalihkan ke dashboard...");
+      setTimeout(() => {
+        router.push("/admin");
+      }, 800);
     } catch (error) {
       console.error("Login error:", error);
-      setErrors({ submit: "Terjadi kesalahan" });
-      setIsSubmitting(false); // Reset loading state on error
+      setErrors({ submit: "Terjadi kesalahan jaringan/server" });
+      setIsSubmitting(false);
     }
   };
 
@@ -107,15 +112,37 @@ export default function AdminLogin() {
             >
               Password
             </label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-black transition duration-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Masukkan password"
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                id="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg text-black transition duration-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Masukkan password"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                className="absolute inset-y-0 right-0 px-3 flex items-center text-gray-500 hover:text-gray-700"
+                aria-label={showPassword ? "Sembunyikan password" : "Tampilkan password"}
+              >
+                {showPassword ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-5 0-9.27-3.11-11-8 1-2.73 2.86-4.99 5.06-6.41"/>
+                    <path d="M1 1l22 22"/>
+                    <path d="M9.88 9.88A3 3 0 0 0 12 15a3 3 0 0 0 2.12-.88"/>
+                    <path d="M22.94 11.06A10.94 10.94 0 0 0 12 4c-1.03 0-2.02.15-2.95.42"/>
+                  </svg>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                  </svg>
+                )}
+              </button>
+            </div>
           </div>
 
           {errors.submit && (
